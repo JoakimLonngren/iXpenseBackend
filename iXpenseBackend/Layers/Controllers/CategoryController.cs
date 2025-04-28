@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace iXpenseBackend.Layers.Controllers
 {
-    [Route("api/[Controller")]
+    [Route("api/[Controller]")]
     [ApiController]
     public class CategoryController : Controller
     {
