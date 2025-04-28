@@ -1,5 +1,6 @@
 ﻿using iXpenseBackend.Data.DbContext;
 using iXpenseBackend.Data.Entities;
+using iXpenseBackend.Models.DTO.Item;
 using Microsoft.EntityFrameworkCore;
 
 namespace iXpenseBackend.Layers.Repositories
@@ -65,6 +66,27 @@ namespace iXpenseBackend.Layers.Repositories
                 .Where(r => r.UserId == userId)
                 .Include(r => r.Items)
                 .ToListAsync();
+        }
+
+        public async Task <MostBoughtItemDto?> GetMostPurchasedItemAsync(string userId, DateTime startDate, DateTime endDate)
+        {
+            var result = await _context.Receipts
+                .Where(r => r.UserId == userId && r.Date >= startDate && r.Date <= endDate)
+                .SelectMany(r => r.Items)
+                .Include(i => i.Category)
+                .AsNoTracking()
+                .GroupBy(i => new { i.Title, CategoryTitle = i.Category.Title })
+                .Select(g => new MostBoughtItemDto
+                {
+                    ItemTitle = g.Key.Title,
+                    CategoryTitle = g.Key.CategoryTitle,
+                    TotalQuantity = g.Sum(i => i.Quantity),
+                    TotalPrice = g.Sum(i => i.Quantity * i.Price),
+                    AveragePrice = g.Sum(i => i.Quantity * i.Price) / g.Sum(i => i.Quantity)
+                })
+                .OrderByDescending(g => g.TotalQuantity)
+                .FirstOrDefaultAsync();
+            return result;
         }
     }
 }
