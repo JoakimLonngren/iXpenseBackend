@@ -6,7 +6,7 @@ namespace iXpenseBackend.Models.DTO.Receipt
     public class CreateReceiptDto
     {
         [Required(ErrorMessage = "From field required")]
-        public string Title { get; set; }
+        public string From { get; set; }
 
         public decimal TotalAmount { get; set; }
 

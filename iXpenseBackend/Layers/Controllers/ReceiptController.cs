@@ -83,19 +83,47 @@ namespace iXpenseBackend.Layers.Controllers
 
         [HttpGet("GetMostPurchasedItem")]
         [Authorize]
-        public async Task<IActionResult> GetTopPurchasedItem(DateTime startDate, DateTime endDate)
+        public async Task<IActionResult> GetMostPurchasedItem([FromQuery] DateTime startDate, DateTime endDate)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if(userId == null)
             {
                 return Unauthorized(new { success = false, message = "User is not authenticated." });
             }
-            
+
             var (isSuccess, message, mostBoughtItem) = await _receiptService.GetMostPurchasedItemAsync(userId, startDate, endDate);
 
-            return isSuccess
-                ? Ok(new {  success = true, data = mostBoughtItem, message})
-                : NotFound(new { isSuccess = false, message });
+            if (!isSuccess)
+                return BadRequest(new { success = false, message });
+
+            return Ok(new { success = true, message, data = mostBoughtItem });
+
+            //return isSuccess
+            //    ? Ok(new {  success = true, data = mostBoughtItem, message})
+            //    : NotFound(new { success = false, message });
+        }
+
+        [HttpGet("GetMostPurchasedCategory")]
+        [Authorize]
+        public async Task<IActionResult> GetMostPurchasedCategory([FromQuery] DateTime startDate, DateTime endDate)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if(userId == null)
+            {
+                return Unauthorized(new { success = false, message = "User is not authenticated." });
+            }
+
+            var (isSuccess, message, data) = await _receiptService.GetMostPurchasedCategoryAsync(userId, startDate, endDate);
+
+            if (!isSuccess)
+                return BadRequest(new { success = false, message });
+
+            return Ok(new { success = true, message, data });
+
+            //return isSuccess 
+            //    ? Ok(new { success = true, message, data })
+            //    : NotFound(new { success = false, message });
+
         }
     }
 }
