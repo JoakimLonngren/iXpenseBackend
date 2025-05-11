@@ -2,6 +2,7 @@
 using iXpenseBackend.Layers.Repositories;
 using iXpenseBackend.Models.DTO.Item;
 using iXpenseBackend.Models.DTO.Receipt;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace iXpenseBackend.Layers.Services
 {
@@ -88,14 +89,14 @@ namespace iXpenseBackend.Layers.Services
 
                 if(startDate >  endDate)
                 {
-                    return (false, "Start date cant be later than end date.", null);
+                    return (true, "Start date cant be later than end date.", null);
                 }
 
                 var mostBoughtItem = await _receiptRepo.GetMostPurchasedItemAsync(userId, startDate, endDate);
 
                 if(mostBoughtItem == null)
                 {
-                    return (false, "You have no registered purchases during the selected period.", null);
+                    return (true, "You have no registered purchases during the selected period.", null);
                 }
 
                 return (true, "Top purchased item retrieved successfully.", mostBoughtItem);
@@ -103,6 +104,29 @@ namespace iXpenseBackend.Layers.Services
             catch (Exception ex)
             {
                 return (false, "An unexpected error occured while retrieving the information.", null);
+            }
+        }
+
+        public async Task <(bool isSuccess, string message, List<MostBoughtCategoryDto>? data)> GetMostPurchasedCategoryAsync(string userId, DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(userId))
+                    return (false, "User ID is required", null);
+
+                if (startDate > endDate)
+                    return (true, "Startdate cannot be later than End-date", null);
+
+                var result = await _receiptRepo.GetMostPurchasedCategoryAsync(userId, startDate, endDate);
+
+                if (result == null || !result.Any())
+                    return (true, "No categories found during the selected period.", null);
+
+                return (true, "Category spending retrieved successfully.", result);
+            }
+            catch (Exception)
+            {
+                return (false, "An error occured while retrieving the categories", null);
             }
         }
 
@@ -134,7 +158,7 @@ namespace iXpenseBackend.Layers.Services
         {
             return new Receipt
             {
-                From = dto.Title,
+                From = dto.From,
                 Date = dto.Date,
                 TotalAmount = items.Sum(item => item.Price * item.Quantity),
                 UserId = userId,

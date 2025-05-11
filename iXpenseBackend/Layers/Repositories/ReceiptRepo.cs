@@ -1,6 +1,7 @@
 ﻿using iXpenseBackend.Data.DbContext;
 using iXpenseBackend.Data.Entities;
 using iXpenseBackend.Models.DTO.Item;
+using iXpenseBackend.Models.DTO.Receipt;
 using Microsoft.EntityFrameworkCore;
 
 namespace iXpenseBackend.Layers.Repositories
@@ -73,7 +74,7 @@ namespace iXpenseBackend.Layers.Repositories
             var result = await _context.Receipts
                 .Where(r => r.UserId == userId && r.Date >= startDate && r.Date <= endDate)
                 .SelectMany(r => r.Items)
-                .Include(i => i.Category)
+                .Where(i => i.Category != null)
                 .AsNoTracking()
                 .GroupBy(i => new { i.Title, CategoryTitle = i.Category.Title })
                 .Select(g => new MostBoughtItemDto
@@ -87,6 +88,23 @@ namespace iXpenseBackend.Layers.Repositories
                 .OrderByDescending(g => g.TotalQuantity)
                 .FirstOrDefaultAsync();
             return result;
+        }
+
+        public async Task <List<MostBoughtCategoryDto>> GetMostPurchasedCategoryAsync(string userId, DateTime start, DateTime end)
+        {
+            return await _context.Receipts
+                .Where(r => r.UserId == userId && r.Date >= start && r.Date <= end)
+                .SelectMany(r => r.Items)
+                .Where(i => i.Category != null)
+                .AsNoTracking()
+                .GroupBy(i => i.Category.Title)
+                .Select(g => new MostBoughtCategoryDto
+                {
+                    CategoryTitle = g.Key,
+                    TotalSpent = g.Sum(i => i.Price * i.Quantity)
+                })
+                .OrderByDescending(g => g.TotalSpent)
+                .ToListAsync();
         }
     }
 }
